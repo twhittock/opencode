@@ -33,7 +33,7 @@ import {
   pushPromptHistory,
 } from "./prompt.shared"
 import type { FooterKeybinds, FooterState, RunAgent, RunPrompt, RunPromptPart, RunResource } from "./types"
-import type { RunFooterTheme } from "./theme"
+import { transparent, type RunFooterTheme } from "./theme"
 
 const LEADER_TIMEOUT_MS = 2000
 const AUTOCOMPLETE_ROWS = 6
@@ -219,7 +219,7 @@ export function RunPromptAutocomplete(props: {
         width="100%"
         height={AUTOCOMPLETE_ROWS}
         flexDirection="column"
-        backgroundColor={props.theme().pane}
+        backgroundColor={transparent}
       >
         <Index
           each={props.options()}
