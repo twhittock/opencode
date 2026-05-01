@@ -1,12 +1,11 @@
 // Entry and exit splash banners for direct interactive mode scrollback.
 //
-// Renders the opencode ASCII logo with half-block shadow characters, the
-// session title, and contextual hints (entry: "/exit to finish", exit:
-// "opencode -s <id>" to resume). These are scrollback snapshots, so they
-// become immutable terminal history once committed.
+// Renders the full opencode entry logo and a compact [O] exit badge, plus
+// session metadata and the resume command. These are scrollback snapshots, so
+// they become immutable terminal history once committed.
 //
-// The logo uses a cell-based renderer. cells() classifies each character
-// in the logo template as text, full-block, half-block-mix, or
+// Both variants use a cell-based renderer. cells() classifies each character
+// in the source template as text, full-block, half-block-mix, or
 // half-block-top, and draw() renders it with foreground/background shadow
 // colors from the theme.
 import {
@@ -20,7 +19,7 @@ import {
   type ScrollbackWriter,
 } from "@opentui/core"
 import * as Locale from "@/util/locale"
-import { logo } from "@/cli/logo"
+import { go, logo } from "@/cli/logo"
 import type { RunSplashTheme } from "./theme"
 
 export const SPLASH_TITLE_LIMIT = 50
@@ -77,11 +76,27 @@ function title(text: string | undefined): string {
     return SPLASH_TITLE_FALLBACK
   }
 
-  if (!text.trim()) {
+  let value = ""
+  let gap = false
+  for (const char of text.trim()) {
+    if (char === " " || char === "\n" || char === "\r" || char === "\t") {
+      gap = true
+      continue
+    }
+
+    if (gap && value.length > 0) {
+      value += " "
+    }
+
+    value += char
+    gap = false
+  }
+
+  if (!value) {
     return SPLASH_TITLE_FALLBACK
   }
 
-  return Locale.truncate(text.trim(), SPLASH_TITLE_LIMIT)
+  return Locale.truncate(value, SPLASH_TITLE_LIMIT)
 }
 
 function write(
@@ -188,58 +203,66 @@ function build(input: SplashWriterInput, kind: "entry" | "exit", ctx: Scrollback
   const left = color(input.theme.left, fallback(81, "#38bdf8"))
   const right = color(input.theme.right, RGBA.defaultForeground(RGBA.fromHex("#f8fafc")))
   const leftShadow = color(input.theme.leftShadow, fallback(238, "#334155"))
-  const rightShadow = color(input.theme.rightShadow, fallback(240, "#475569"))
-  let y = 0
-
-  for (let i = 0; i < logo.left.length; i += 1) {
-    const leftText = logo.left[i] ?? ""
-    const rightText = logo.right[i] ?? ""
-
-    draw(lines, leftText, {
-      left: 0,
-      top: y,
-      fg: left,
-      shadow: leftShadow,
-    })
-    draw(lines, rightText, {
-      left: leftText.length + 1,
-      top: y,
-      fg: right,
-      shadow: rightShadow,
-    })
-    y += 1
-  }
-
-  y += 1
-
-  if (input.showSession !== false) {
-    const label = "Session".padEnd(10, " ")
-    push(lines, 0, y, label, input.theme.left, undefined, TextAttributes.DIM)
-    push(lines, label.length, y, meta.title, input.theme.right, undefined, TextAttributes.BOLD)
-    y += 1
-  }
+  let height = 1
 
   if (kind === "entry") {
-    push(lines, 0, y, "Type /exit to finish.", input.theme.left, undefined, undefined)
-    y += 1
+    const rightShadow = color(input.theme.rightShadow, fallback(240, "#475569"))
+
+    for (let i = 0; i < logo.left.length; i += 1) {
+      const leftText = logo.left[i] ?? ""
+      const rightText = logo.right[i] ?? ""
+
+      draw(lines, leftText, {
+        left: 0,
+        top: i,
+        fg: left,
+        shadow: leftShadow,
+      })
+      draw(lines, rightText, {
+        left: leftText.length + 1,
+        top: i,
+        fg: right,
+        shadow: rightShadow,
+      })
+    }
+
+    height = logo.left.length + 1
+
+    if (input.showSession !== false) {
+      const top = logo.left.length + 1
+      const label = "Session".padEnd(10, " ")
+      push(lines, 0, top, label, left, undefined, TextAttributes.DIM)
+      push(lines, label.length, top, meta.title, right, undefined, TextAttributes.BOLD)
+      height = top + 1
+    }
   }
 
   if (kind === "exit") {
-    const next = "Continue".padEnd(10, " ")
-    push(lines, 0, y, next, input.theme.left, undefined, TextAttributes.DIM)
-    push(
-      lines,
-      next.length,
-      y,
-      `opencode -s ${meta.session_id}`,
-      input.theme.right,
-      undefined,
-      TextAttributes.BOLD,
-    )
-    y += 1
+    const mark = go.right.slice(1)
+    const top = 1
+    const body_left = (mark[0]?.length ?? 0) + 2
+    const session = "Session  "
+    const label = "Continue "
+
+    for (let i = 0; i < mark.length; i += 1) {
+      draw(lines, mark[i] ?? "", {
+        left: 0,
+        top: top + i,
+        fg: left,
+        shadow: leftShadow,
+      })
+    }
+
+    if (input.showSession !== false) {
+      push(lines, body_left, top, session, left, undefined, TextAttributes.DIM)
+      push(lines, body_left + session.length, top, meta.title, right, undefined, TextAttributes.BOLD)
+    }
+
+    push(lines, body_left, top + 1, label, left, undefined, TextAttributes.DIM)
+    push(lines, body_left + label.length, top + 1, `opencode run -i -s ${meta.session_id}`, right, undefined, TextAttributes.BOLD)
+    height = top + mark.length
   }
 
-  const height = Math.max(1, y)
   const root = new BoxRenderable(ctx.renderContext, {
     id: `run-direct-splash-${kind}-${id++}`,
     position: "absolute",

@@ -129,6 +129,24 @@ describe("run runtime queue", () => {
     ])
   })
 
+  test("passes prompts to onSend", async () => {
+    const ui = footer()
+    const seen: string[] = []
+
+    await runPromptQueue({
+      footer: ui.api,
+      initialInput: "  hello  ",
+      onSend: (input) => {
+        seen.push(input.text)
+      },
+      run: async () => {
+        ui.api.close()
+      },
+    })
+
+    expect(seen).toEqual(["  hello  "])
+  })
+
   test("runs queued prompts in order", async () => {
     const ui = footer()
     const seen: string[] = []

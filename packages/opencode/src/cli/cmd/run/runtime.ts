@@ -20,7 +20,7 @@ import { createRuntimeLifecycle } from "./runtime.lifecycle"
 import { recordRunSpanError, setRunSpanAttributes, withRunSpan } from "./otel"
 import { trace } from "./trace"
 import { cycleVariant, formatModelLabel, resolveSavedVariant, resolveVariant, saveVariant } from "./variant.shared"
-import type { RunInput } from "./types"
+import type { RunInput, RunPrompt } from "./types"
 
 /** @internal Exported for testing */
 export { pickVariant, resolveVariant } from "./variant.shared"
@@ -80,6 +80,7 @@ type RuntimeState = {
   limits: Record<string, number>
   activeVariant: string | undefined
   sessionID: string
+  history: RunPrompt[]
   sessionTitle?: string
   agent: string | undefined
   demo?: ReturnType<typeof createRunDemo>
@@ -156,6 +157,7 @@ async function runInteractiveRuntime(input: RunRuntimeInput): Promise<void> {
         limits: {},
         activeVariant: resolveVariant(ctx.variant, session.variant, savedVariant, []),
         sessionID: ctx.sessionID,
+        history: [...session.history],
         sessionTitle: ctx.sessionTitle,
         agent: ctx.agent,
       }
@@ -179,7 +181,7 @@ async function runInteractiveRuntime(input: RunRuntimeInput): Promise<void> {
 
         state.session = input.resolveSession(ctx).then((next) => {
           state.sessionID = next.sessionID
-          state.sessionTitle = next.sessionTitle
+          state.sessionTitle = next.sessionTitle ?? state.sessionTitle
           state.agent = next.agent
           setRunSpanAttributes(span, {
             "opencode.agent.name": state.agent,
@@ -405,8 +407,9 @@ async function runInteractiveRuntime(input: RunRuntimeInput): Promise<void> {
           footer,
           initialInput: input.initialInput,
           trace: log,
-          onPrompt: () => {
+          onSend: (prompt) => {
             state.shown = true
+            state.history.push(prompt)
           },
           run: async (prompt, signal) => {
             if (state.demo && (await state.demo.prompt(prompt, signal))) {
@@ -489,6 +492,7 @@ async function runInteractiveRuntime(input: RunRuntimeInput): Promise<void> {
           showExit: state.shown && hasSession(input, state),
           sessionTitle: title,
           sessionID: state.sessionID,
+          history: state.history,
         })
       }
     },

@@ -9,6 +9,7 @@
 // Also wires SIGINT so Ctrl-c during a turn triggers the two-press exit
 // sequence through RunFooter.requestExit().
 import { createCliRenderer, type CliRenderer, type ScrollbackWriter } from "@opentui/core"
+import { Session as SessionApi } from "@/session/session"
 import * as Locale from "@/util/locale"
 import { withRunSpan } from "./otel"
 import { entrySplash, exitSplash, splashMeta } from "./splash"
@@ -28,7 +29,6 @@ import type {
 import { formatModelLabel } from "./variant.shared"
 
 const FOOTER_HEIGHT = 7
-const DEFAULT_TITLE = /^(New session - |Child session - )\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
 
 type SplashState = {
   entry: boolean
@@ -70,7 +70,7 @@ export type LifecycleInput = {
 
 export type Lifecycle = {
   footer: FooterApi
-  close(input: { showExit: boolean; sessionTitle?: string; sessionID?: string }): Promise<void>
+  close(input: { showExit: boolean; sessionTitle?: string; sessionID?: string; history?: RunPrompt[] }): Promise<void>
 }
 
 // Gracefully tears down the renderer. Order matters: switch external output
@@ -95,7 +95,7 @@ function shutdown(renderer: CliRenderer): void {
 }
 
 function splashInfo(title: string | undefined, history: RunPrompt[]) {
-  if (title && !DEFAULT_TITLE.test(title)) {
+  if (title && !SessionApi.isDefaultTitle(title)) {
     return {
       title,
       showSession: true,
@@ -235,7 +235,7 @@ export async function createRuntimeLifecycle(input: LifecycleInput): Promise<Lif
       process.on("SIGINT", sigint)
 
       let closed = false
-      const close = async (next: { showExit: boolean; sessionTitle?: string; sessionID?: string }) => {
+      const close = async (next: { showExit: boolean; sessionTitle?: string; sessionID?: string; history?: RunPrompt[] }) => {
         if (closed) {
           return
         }
@@ -256,7 +256,7 @@ export async function createRuntimeLifecycle(input: LifecycleInput): Promise<Lif
               const show = renderer.isDestroyed ? false : next.showExit
               if (!renderer.isDestroyed && show) {
                 const sessionID = next.sessionID || input.getSessionID?.() || input.sessionID
-                const splash = splashInfo(next.sessionTitle ?? input.sessionTitle, input.history)
+                const splash = splashInfo(next.sessionTitle ?? input.sessionTitle, next.history ?? input.history)
                 queueSplash(
                   renderer,
                   state,

@@ -27,7 +27,7 @@ export type QueueInput = {
   footer: FooterApi
   initialInput?: string
   trace?: Trace
-  onPrompt?: () => void
+  onSend?: (prompt: RunPrompt) => void
   run: (prompt: RunPrompt, signal: AbortSignal) => Promise<void>
 }
 
@@ -126,6 +126,7 @@ export async function runPromptQueue(input: QueueInput): Promise<void> {
             const commit = { kind: "user", text: prompt.text, phase: "start", source: "system" } as const
             input.trace?.write("ui.commit", commit)
             input.footer.append(commit)
+            input.onSend?.(prompt)
 
             const next = await Promise.race([task, stop.promise])
             if (next.type === "closed") {
@@ -185,7 +186,6 @@ export async function runPromptQueue(input: QueueInput): Promise<void> {
       return
     }
 
-    input.onPrompt?.()
     state.queue.push(prompt)
     emit(
       {
