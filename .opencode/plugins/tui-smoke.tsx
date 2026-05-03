@@ -4,6 +4,7 @@ import { useBindings, useKeymapSelector } from "@opentui/keymap/solid"
 import { RGBA, VignetteEffect, type KeyEvent, type Renderable } from "@opentui/core"
 import {
   resolveBindingSections,
+  type Binding,
   type BindingSectionsConfig,
   type BindingValue,
   TuiPlugin,
@@ -46,6 +47,7 @@ const command = {
 const sectionNames = ["global", "dialog", "local", "screen", "modal"] as const
 type SectionName = (typeof sectionNames)[number]
 type SectionConfig = Record<string, BindingValue<Renderable, KeyEvent>>
+type ResolvedSections = Record<SectionName, Binding<Renderable, KeyEvent>[]>
 type SmokeKeymap = {
   sections?: Partial<Record<SectionName, SectionConfig>>
 }
@@ -138,7 +140,7 @@ const names = (input: Cfg) => {
   }
 }
 
-function createKeys(input: SmokeKeymap | undefined) {
+function createKeys(input: SmokeKeymap | undefined): { sections: ResolvedSections } {
   const sections = resolveBindingSections(
     {
       global: { ...defaultKeymap.global, ...input?.sections?.global },
