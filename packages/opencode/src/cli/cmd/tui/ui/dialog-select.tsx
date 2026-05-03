@@ -6,7 +6,7 @@ import {
   type KeyEvent,
   type Renderable,
 } from "@opentui/core"
-import type { BindingInput } from "@opentui/keymap"
+import type { Binding } from "@opentui/keymap"
 import { useTheme, selectedForeground } from "@tui/context/theme"
 import { entries, filter, flatMap, groupBy, pipe } from "remeda"
 import { batch, createEffect, createMemo, For, Show, type JSX, on } from "solid-js"
@@ -37,7 +37,7 @@ export interface DialogSelectProps<T> {
     disabled?: boolean
     onTrigger: (option: DialogSelectOption<T>) => void
   }[]
-  bindings?: readonly BindingInput<Renderable, KeyEvent>[]
+  bindings?: readonly Binding<Renderable, KeyEvent>[]
   current?: T
 }
 

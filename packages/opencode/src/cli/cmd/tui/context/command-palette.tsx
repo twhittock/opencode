@@ -31,7 +31,7 @@ const ctx = createContext<CommandPaletteContext>()
 type PaletteCommandEntry = ReturnType<OpenTuiKeymap["getCommandEntries"]>[number]
 
 function isVisiblePaletteCommand(entry: PaletteCommandEntry) {
-  return entry.command.fields.hidden !== true && entry.command.name !== COMMAND_PALETTE_DIALOG
+  return entry.command.hidden !== true && entry.command.name !== COMMAND_PALETTE_DIALOG
 }
 
 export function CommandPaletteProvider(props: ParentProps) {
@@ -53,13 +53,17 @@ export function CommandPaletteProvider(props: ParentProps) {
 
   const slashes = createMemo<SlashEntry[]>(() =>
     entries().flatMap((entry) => {
-      const slashName = entry.command.fields.slashName
+      const slashName = entry.command.slashName
       if (typeof slashName !== "string" || !slashName) return []
-      const slashAliases = entry.command.fields.slashAliases
+      const slashAliases = entry.command.slashAliases
       return {
         display: `/${slashName}`,
         description:
-          typeof entry.command.fields.desc === "string" ? entry.command.fields.desc : (entry.command.fields.title as string),
+          typeof entry.command.desc === "string"
+            ? entry.command.desc
+            : typeof entry.command.title === "string"
+              ? entry.command.title
+              : undefined,
         aliases: Array.isArray(slashAliases)
           ? slashAliases.filter((alias): alias is string => typeof alias === "string").map((alias) => `/${alias}`)
           : undefined,
@@ -116,12 +120,12 @@ function CommandPaletteDialog(props: { run(command: string): void }) {
   })
   const options = createMemo(() =>
     entries().map((entry) => ({
-      title: typeof entry.command.fields.title === "string" ? entry.command.fields.title : entry.command.name,
-      description: typeof entry.command.fields.desc === "string" ? entry.command.fields.desc : undefined,
-      category: typeof entry.command.fields.category === "string" ? entry.command.fields.category : undefined,
+      title: typeof entry.command.title === "string" ? entry.command.title : entry.command.name,
+      description: typeof entry.command.desc === "string" ? entry.command.desc : undefined,
+      category: typeof entry.command.category === "string" ? entry.command.category : undefined,
       footer: formatKeyBindings(entry.bindings, config),
       value: entry.command.name,
-      suggested: entry.command.fields.suggested === true,
+      suggested: entry.command.suggested === true,
       onSelect: (dialog: DialogContext) => {
         dialog.clear()
         props.run(entry.command.name)

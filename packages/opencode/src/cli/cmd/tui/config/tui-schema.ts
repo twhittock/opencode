@@ -1,6 +1,6 @@
 import z from "zod"
 import type { KeyEvent, Renderable } from "@opentui/core"
-import type { BindingInput } from "@opentui/keymap"
+import type { Binding } from "@opentui/keymap"
 import type { BindingSectionsConfig, BindingValue } from "@opentui/keymap/extras"
 import { ConfigPlugin } from "@/config/plugin"
 import { ConfigKeybinds } from "@/config/keybinds"
@@ -40,7 +40,7 @@ export const KeymapSectionNames = [
 ] as const
 
 export type KeymapSection = (typeof KeymapSectionNames)[number]
-export type KeymapSections = Record<KeymapSection, BindingInput<Renderable, KeyEvent>[]>
+export type KeymapSections = Record<KeymapSection, Binding<Renderable, KeyEvent>[]>
 export type KeymapInfo = {
   leader: string
   sections: KeymapSections

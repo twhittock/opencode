@@ -1,5 +1,5 @@
 import type { KeyEvent, Renderable } from "@opentui/core"
-import type { BindingInput } from "@opentui/keymap"
+import type { Binding } from "@opentui/keymap"
 import { resolveBindingSections, type BindingSectionsConfig, type BindingValue } from "@opentui/keymap/extras"
 import { ConfigKeybinds } from "@/config/keybinds"
 import { KeymapSectionNames, type KeymapInfo, type KeymapSection } from "./tui-schema"
@@ -51,7 +51,7 @@ function add(config: SectionsConfig, section: KeymapSection, command: string, bi
   config[section][command] = binding ?? "none"
 }
 
-function bindingWith(key: string | undefined, input: Omit<BindingInput<Renderable, KeyEvent>, "key" | "cmd">) {
+function bindingWith(key: string | undefined, input: Omit<Binding<Renderable, KeyEvent>, "key" | "cmd">) {
   if (!key || key === "none") return "none"
   return { ...input, key }
 }

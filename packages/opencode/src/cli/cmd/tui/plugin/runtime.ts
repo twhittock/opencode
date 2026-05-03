@@ -522,6 +522,12 @@ function pluginApi(runtime: RuntimeState, plugin: PluginEntry, scope: PluginScop
     registerLayerFields(...args: Parameters<TuiPluginApi["keymap"]["registerLayerFields"]>) {
       return scope.track(api.keymap.registerLayerFields(...args))
     },
+    prependLayerBindingsTransformer(...args: Parameters<TuiPluginApi["keymap"]["prependLayerBindingsTransformer"]>) {
+      return scope.track(api.keymap.prependLayerBindingsTransformer(...args))
+    },
+    appendLayerBindingsTransformer(...args: Parameters<TuiPluginApi["keymap"]["appendLayerBindingsTransformer"]>) {
+      return scope.track(api.keymap.appendLayerBindingsTransformer(...args))
+    },
     prependBindingTransformer(...args: Parameters<TuiPluginApi["keymap"]["prependBindingTransformer"]>) {
       return scope.track(api.keymap.prependBindingTransformer(...args))
     },
@@ -548,6 +554,12 @@ function pluginApi(runtime: RuntimeState, plugin: PluginEntry, scope: PluginScop
     },
     registerCommandFields(...args: Parameters<TuiPluginApi["keymap"]["registerCommandFields"]>) {
       return scope.track(api.keymap.registerCommandFields(...args))
+    },
+    prependCommandTransformer(...args: Parameters<TuiPluginApi["keymap"]["prependCommandTransformer"]>) {
+      return scope.track(api.keymap.prependCommandTransformer(...args))
+    },
+    appendCommandTransformer(...args: Parameters<TuiPluginApi["keymap"]["appendCommandTransformer"]>) {
+      return scope.track(api.keymap.appendCommandTransformer(...args))
     },
     prependCommandResolver(...args: Parameters<TuiPluginApi["keymap"]["prependCommandResolver"]>) {
       return scope.track(api.keymap.prependCommandResolver(...args))

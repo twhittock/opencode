@@ -16,7 +16,7 @@ import type {
   Config as SdkConfig,
 } from "@opencode-ai/sdk/v2"
 import type { CliRenderer, KeyEvent, RGBA, Renderable, SlotMode } from "@opentui/core"
-import type { BindingInput, Keymap } from "@opentui/keymap"
+import type { Binding, Keymap, KeymapEvent } from "@opentui/keymap"
 import {
   resolveBindingSections as resolveKeymapBindingSections,
   type BindingSectionsConfig,
@@ -28,7 +28,7 @@ import type { Config as PluginConfig, PluginOptions } from "./index.js"
 
 export type { CliRenderer, KeyEvent, Renderable, SlotMode } from "@opentui/core"
 export { stringifyKeySequence, stringifyKeyStroke } from "@opentui/keymap"
-export type { BindingInput, KeyLike, KeySequencePart, KeyStringifyInput, StringifyOptions } from "@opentui/keymap"
+export type { Binding, KeyLike, KeySequencePart, KeyStringifyInput, StringifyOptions } from "@opentui/keymap"
 export { formatCommandBindings, formatKeySequence } from "@opentui/keymap/extras"
 export type {
   BindingSectionsConfig,
@@ -38,6 +38,11 @@ export type {
   KeySequenceFormatPart,
   SequenceBindingLike,
 } from "@opentui/keymap/extras"
+
+export type BindingInput<TTarget extends object = object, TEvent extends KeymapEvent = KeymapEvent> = Binding<
+  TTarget,
+  TEvent
+>
 
 export function resolveBindingSections<Section extends string>(
   config: BindingSectionsConfig<Renderable, KeyEvent> | undefined,
@@ -291,7 +296,7 @@ type TuiConfigView = Pick<PluginConfig, "$schema" | "theme" | "keybinds" | "plug
     plugin_enabled?: Record<string, boolean>
     keymap: {
       leader: string
-      sections: Record<string, ReadonlyArray<BindingInput<Renderable, KeyEvent>>>
+      sections: Record<string, ReadonlyArray<Binding<Renderable, KeyEvent>>>
     }
   }
 

@@ -785,6 +785,67 @@ test("auto-disposes plugin keymap layers", async () => {
   }
 })
 
+test("auto-disposes plugin keymap transformers", async () => {
+  await using tmp = await tmpdir({
+    init: async (dir) => {
+      const file = path.join(dir, "keymap-transformer-cleanup-plugin.ts")
+      const spec = pathToFileURL(file).href
+
+      await Bun.write(
+        file,
+        `export default {
+  id: "demo.keymap.transformer.cleanup",
+  tui: async (api) => {
+    api.keymap.prependLayerBindingsTransformer((bindings) => bindings)
+    api.keymap.appendLayerBindingsTransformer((bindings) => bindings)
+    api.keymap.prependCommandTransformer(() => {})
+    api.keymap.appendCommandTransformer(() => {})
+  },
+}
+`,
+      )
+
+      return { spec }
+    },
+  })
+
+  let add = 0
+  let drop = 0
+  const track = () => {
+    add += 1
+    return () => {
+      drop += 1
+    }
+  }
+  const keymap = {
+    registerLayer: () => () => {},
+    prependLayerBindingsTransformer: track,
+    appendLayerBindingsTransformer: track,
+    prependCommandTransformer: track,
+    appendCommandTransformer: track,
+  } as unknown as NonNullable<Parameters<typeof createTuiPluginApi>[0]>["keymap"]
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
+
+  try {
+    await TuiPluginRuntime.init({
+      api: createTuiPluginApi({ keymap }),
+      config: {
+        plugin: [tmp.extra.spec],
+        plugin_origins: [{ spec: tmp.extra.spec, scope: "local", source: path.join(tmp.path, "tui.json") }],
+      },
+    })
+
+    expect(add).toBe(4)
+    expect(drop).toBe(0)
+  } finally {
+    await TuiPluginRuntime.dispose()
+    expect(drop).toBe(4)
+    cwd.mockRestore()
+    wait.mockRestore()
+  }
+})
+
 test("manual onDispose for plugin keymap layers stays idempotent", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
