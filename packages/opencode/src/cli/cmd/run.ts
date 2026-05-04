@@ -372,6 +372,11 @@ export const RunCommand = effectCmd({
           action: "deny",
           pattern: "*",
         },
+        {
+          permission: "edit",
+          action: "allow",
+          pattern: "*",
+        },
       ]
 
       function title() {
