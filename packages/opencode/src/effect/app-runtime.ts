@@ -52,6 +52,7 @@ import { SessionShare } from "@/share/session"
 import { SyncEvent } from "@/sync"
 import { Npm } from "@opencode-ai/core/npm"
 import { memoMap } from "@opencode-ai/core/effect/memo-map"
+import { AuthV2 } from "@/v2/auth"
 
 export const AppLayer = Layer.mergeAll(
   Npm.defaultLayer,
@@ -102,6 +103,7 @@ export const AppLayer = Layer.mergeAll(
   ShareNext.defaultLayer,
   SessionShare.defaultLayer,
   SyncEvent.defaultLayer,
+  AuthV2.defaultLayer,
 ).pipe(Layer.provideMerge(InstanceLayer.layer), Layer.provideMerge(Observability.layer))
 
 const rt = ManagedRuntime.make(AppLayer, { memoMap })
